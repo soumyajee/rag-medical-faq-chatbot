@@ -4,35 +4,45 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import pickle
 import numpy as np
-from dotenv import load_dotenv
 
-# Load environment variables from .env
-load_dotenv()
+# =========================
+# 🔑 Manually set OpenRouter API Key
+# =========================
+api_key = "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"   # ⬅️ put your key here
 
-# Load embeddings model, index, docs
-embedder = SentenceTransformer('all-MiniLM-L6-v2')
-index = faiss.read_index('faiss_index.index')
-with open('documents.pkl', 'rb') as f:
-    documents = pickle.load(f)
-
-# OpenRouter client
-api_key = os.getenv("OPENROUTER_API_KEY")   # ✅ change variable name
 if not api_key:
-    raise ValueError("OPENROUTER_API_KEY is not set. Please check your .env file.")
+    raise ValueError("OPENROUTER_API_KEY is not set. Please add your API key in the code.")
 
+# Initialize OpenRouter client
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=api_key
 )
 
+# =========================
+# Load embeddings model, FAISS index, and documents
+# =========================
+embedder = SentenceTransformer('all-MiniLM-L6-v2')
+index = faiss.read_index('faiss_index.index')
+
+with open('documents.pkl', 'rb') as f:
+    documents = pickle.load(f)
+
+# =========================
+# Retrieval function
+# =========================
 def retrieve(query, top_k=3):
     query_emb = embedder.encode([query])
     _, indices = index.search(np.array(query_emb).astype('float32'), top_k)
     return [documents[i] for i in indices[0]]
 
+# =========================
+# Answer generation function
+# =========================
 def generate_answer(query, context, model="openai/gpt-3.5-turbo"):
     prompt = f"""
-    You are a helpful medical FAQ assistant. Use the following context to answer the user's query accurately and naturally. Stick to the provided information; do not add external knowledge or speculate.
+    You are a helpful medical FAQ assistant. Use the following context to answer the user's query accurately and naturally. 
+    Stick to the provided information; do not add external knowledge or speculate.
 
     Context:
     {'\n\n'.join(context)}
@@ -49,6 +59,9 @@ def generate_answer(query, context, model="openai/gpt-3.5-turbo"):
     )
     return chat_completion.choices[0].message.content
 
+# =========================
+# RAG pipeline
+# =========================
 def rag_query(query, model="openai/gpt-3.5-turbo"):
     context = retrieve(query)
     if not context:
