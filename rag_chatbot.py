@@ -8,7 +8,7 @@ import numpy as np
 # =========================
 # 🔑 Manually set OpenRouter API Key
 # =========================
-api_key = "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"   # ⬅️ put your key here
+api_key = "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"   # ⬅️ put your key here
 
 if not api_key:
     raise ValueError("OPENROUTER_API_KEY is not set. Please add your API key in the code.")
@@ -67,5 +67,6 @@ def rag_query(query, model="openai/gpt-3.5-turbo"):
     if not context:
         return "Sorry, I couldn't find relevant information."
     return generate_answer(query, context, model)
+
 
 
