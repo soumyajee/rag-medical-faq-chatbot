@@ -5,3 +5,5 @@ pandas
 streamlit
 openai
 numpy
+python-dotenv
+
